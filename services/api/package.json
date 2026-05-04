@@ -1,0 +1,27 @@
+{
+  "name": "@verifyflow/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --build",
+    "typecheck": "tsc --build --pretty false",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@verifyflow/config": "0.1.0",
+    "@verifyflow/contracts": "0.1.0",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.6.2",
+    "postgres": "^3.4.7"
+  }
+}

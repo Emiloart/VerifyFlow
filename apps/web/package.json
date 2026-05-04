@@ -1,0 +1,25 @@
+{
+  "name": "@verifyflow/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "typecheck": "tsc --noEmit --pretty false",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
+    "@verifyflow/contracts": "0.1.0",
+    "lucide-react": "^0.555.0",
+    "next": "^16.0.7",
+    "next-auth": "^5.0.0-beta.30",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3"
+  }
+}

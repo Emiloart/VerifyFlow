@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: verifyflow-postgres
+    environment:
+      POSTGRES_DB: verifyflow
+      POSTGRES_USER: verifyflow
+      POSTGRES_PASSWORD: verifyflow
+    ports:
+      - "55432:5432"
+    volumes:
+      - verifyflow-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verifyflow -d verifyflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  verifyflow-postgres-data:
+

@@ -1,0 +1,79 @@
+# 0001 VerifyFlow Neutral KYC Measurement Threat Model
+
+- Status: accepted
+- Date: 2026-05-02
+- Owners: repository maintainer
+
+## Change summary
+
+VerifyFlow adds a standalone product that measures KYC provider flows and grants product tiers from provider decisions.
+
+## Assets
+
+- VerifyFlow user accounts and sessions
+- provider API client credentials
+- provider bearer tokens
+- provider run IDs
+- one-time transfer payloads during user presentation
+- verification results
+- tier grants
+- funnel and audit events
+
+## Trust boundaries
+
+- browser to VerifyFlow web
+- VerifyFlow web to VerifyFlow API
+- VerifyFlow API to Postgres
+- VerifyFlow API to Auth.js session validation
+- VerifyFlow API to provider token endpoint
+- VerifyFlow API to provider check creation endpoint
+- VerifyFlow API to provider verification endpoint
+
+## Entry points and privileged actions
+
+- user sign-in
+- onboarding session creation
+- provider check creation
+- provider verification request
+- tier grant creation
+- enhanced-tier upgrade
+- funnel summary read
+
+## Abuse and misuse cases
+
+- attacker attempts to grant a tier without provider `allow`
+- stolen provider client secret is used to create or verify checks
+- browser attempts to call provider APIs directly
+- replayed transfer payload is used outside intended user flow
+- logs leak opaque artifacts, tokens, or normalized claims
+- funnel telemetry becomes a shadow identity store
+- denied or failed verification is treated as success
+
+## Mitigations
+
+- keep provider calls backend-only
+- store provider secrets only in API runtime environment
+- redact sensitive fields from logs
+- store artifact digests, not raw artifacts, after request completion
+- require provider `allow` before granting `verified` or `enhanced`
+- fail closed on provider auth, check creation, verification, or database errors
+- use bounded funnel event names without raw payloads
+- require invite allowlist for the first friends-and-family environment
+
+## Residual risks
+
+- Provider artifacts are opaque and not cryptographically verified by VerifyFlow.
+- Transfer payload handling remains less private than a later wallet presentation.
+- Client credentials remain high-value secrets until rotation automation exists.
+- Friends-and-family users may paste real personal data into support channels.
+
+## Validation impact
+
+Tests must cover:
+
+- allow grants tier
+- deny does not grant tier
+- provider outages fail closed
+- token acquisition failures fail closed
+- idempotent retries do not duplicate tier grants
+- sensitive payloads are not logged or persisted long-term
