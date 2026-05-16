@@ -1,12 +1,17 @@
 import type { OnboardingClaims, ProviderArtifact, VerificationSummary } from "@verifyflow/contracts";
 
-import type { ApiConfig } from "./config.js";
+import type { ApiConfig, HttpProviderConfig } from "./config.js";
+import { MockKycProviderClient } from "./mock-provider-client.js";
 import type { KycProviderClient, ProviderCheckResponse } from "./repository.js";
 
 type ProviderRole = "issue" | "verify";
 
+export function createKycProviderClient(config: ApiConfig["provider"]): KycProviderClient {
+  return config.mode === "mock" ? new MockKycProviderClient(config) : new HttpKycProviderClient(config);
+}
+
 export class HttpKycProviderClient implements KycProviderClient {
-  constructor(private readonly config: ApiConfig["provider"]) {}
+  constructor(private readonly config: HttpProviderConfig) {}
 
   async startCheck(claims: OnboardingClaims, idempotencyKey: string): Promise<ProviderCheckResponse> {
     const token = await this.getAccessToken("issue");

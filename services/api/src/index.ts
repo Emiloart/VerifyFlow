@@ -2,14 +2,14 @@ import { createDatabase } from "./db/client.js";
 import { loadApiConfig } from "./config.js";
 import { buildApp } from "./app.js";
 import { DrizzleRepository } from "./drizzle-repository.js";
-import { HttpKycProviderClient } from "./provider-client.js";
+import { createKycProviderClient } from "./provider-client.js";
 
 const config = loadApiConfig();
 const database = createDatabase(config.databaseUrl);
 const app = await buildApp({
   config,
   repository: new DrizzleRepository(database.db),
-  providerClient: new HttpKycProviderClient(config.provider)
+  providerClient: createKycProviderClient(config.provider)
 });
 
 try {

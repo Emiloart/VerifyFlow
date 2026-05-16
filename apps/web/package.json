@@ -4,16 +4,16 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node ../../scripts/run-next.mjs dev",
+    "build": "node ../../scripts/run-next.mjs build",
     "typecheck": "tsc --noEmit --pretty false",
-    "start": "next start"
+    "start": "node ../../scripts/run-next.mjs start"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
     "@verifyflow/contracts": "0.1.0",
     "lucide-react": "^0.555.0",
-    "next": "^16.0.7",
+    "next": "16.2.6",
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.2.1",
     "react-dom": "^19.2.1"

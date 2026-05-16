@@ -4,6 +4,7 @@ import type { OnboardingClaims, ProviderArtifact, VerificationSummary } from "@v
 
 import { buildApp } from "./app.js";
 import { MemoryRepository } from "./memory-repository.js";
+import { MockKycProviderClient } from "./mock-provider-client.js";
 import type { KycProviderClient, ProviderCheckResponse } from "./repository.js";
 
 const userHeaders = {
@@ -103,6 +104,59 @@ describe("VerifyFlow API", () => {
     });
 
     expect(verified.statusCode).toBe(400);
+  });
+
+  it("supports deterministic local mock provider upgrade and old-run supersede", async () => {
+    const repository = new MemoryRepository();
+    const app = await buildApp({
+      config: { webOrigin: "http://localhost:3000", webApiToken: "test-web-token" },
+      repository,
+      providerClient: new MockKycProviderClient({ mode: "mock", providerId: "mock-provider" })
+    });
+
+    const session = await app.inject({
+      method: "POST",
+      url: "/v1/onboarding/sessions",
+      headers: userHeaders,
+      payload: { claims: basicClaims() }
+    });
+    const issued = await app.inject({
+      method: "POST",
+      url: "/v1/provider/checks",
+      headers: userHeaders,
+      payload: { onboardingSessionId: session.json<{ onboardingSessionId: string }>().onboardingSessionId }
+    });
+    const verified = await app.inject({
+      method: "POST",
+      url: "/v1/verifications",
+      headers: userHeaders,
+      payload: { presentationPayload: issued.json<{ presentationPayload: unknown }>().presentationPayload }
+    });
+
+    const upgradeSession = await app.inject({
+      method: "POST",
+      url: "/v1/onboarding/sessions",
+      headers: userHeaders,
+      payload: { claims: { ...basicClaims(), kycLevel: "enhanced" } }
+    });
+    const upgraded = await app.inject({
+      method: "POST",
+      url: "/v1/tiers/upgrade",
+      headers: userHeaders,
+      payload: { onboardingSessionId: upgradeSession.json<{ onboardingSessionId: string }>().onboardingSessionId }
+    });
+    const oldPayload = issued.json<{ presentationPayload: unknown }>().presentationPayload;
+    const oldRecheck = await app.inject({
+      method: "POST",
+      url: "/v1/verifications",
+      headers: userHeaders,
+      payload: { presentationPayload: oldPayload }
+    });
+
+    expect(verified.json<{ tier: string }>().tier).toBe("verified");
+    expect(upgraded.json<{ tier: string }>().tier).toBe("enhanced");
+    expect(oldRecheck.json<{ tier: string; verification: { providerStatus: string } }>().tier).toBe("enhanced");
+    expect(oldRecheck.json<{ verification: { providerStatus: string } }>().verification.providerStatus).toBe("superseded");
   });
 });
 

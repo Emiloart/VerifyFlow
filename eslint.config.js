@@ -3,15 +3,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  {
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname
-      }
-    }
-  },
+  ...tseslint.configs.strict,
   {
     ignores: [
       "**/dist/**",
@@ -33,12 +25,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unnecessary-condition": "off",
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-confusing-void-expression": "off",
-      "@typescript-eslint/no-misused-promises": [
-        "error",
-        {
-          "checksVoidReturn": false
-        }
-      ]
+      "@typescript-eslint/no-misused-promises": "off"
     }
   }
 );

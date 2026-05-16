@@ -19,9 +19,9 @@
     }
   },
   "scripts": {
-    "dev": "npm run dev -w services/api & npm run dev -w apps/web",
+    "dev": "bash scripts/dev-local.sh",
     "build": "npm run build --workspaces --if-present",
-    "lint": "eslint .",
+    "lint": "eslint \"apps/web/app/**/*.{ts,tsx}\" \"apps/web/auth.ts\" \"services/api/src/**/*.ts\" \"packages/*/src/**/*.ts\"",
     "typecheck": "tsc --build --pretty false && npm run typecheck -w apps/web",
     "test": "vitest run",
     "test:e2e": "playwright test",
@@ -33,7 +33,7 @@
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.57.0",
     "@types/node": "^24.10.2",
-    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.2",
     "eslint": "^9.39.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",

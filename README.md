@@ -34,4 +34,15 @@ npm install
 npm run validate
 ```
 
+## Local mock run
+
+```bash
+cp .env.example .env
+docker compose -f infra/local/docker-compose.yml up -d
+npm run db:push -w services/api
+npm run dev
+```
+
+The default `.env.example` uses the local mock provider adapter, so the first local loop does not require a real KYC provider sandbox.
+
 Local runtime dependencies are documented in `docs/runbooks/local-dev.md`.
