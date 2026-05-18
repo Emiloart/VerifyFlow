@@ -21,6 +21,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - Drizzle/Postgres schema
 - first-party funnel events
 - local mock KYC provider adapter for deterministic product-loop testing
+- local test auth for browser E2E before Google OAuth is configured
 - local and deployment runbooks
 
 ## Out of scope
@@ -52,6 +53,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - VerifyFlow is standalone at `/mnt/c/dev/verifyflow`.
 - at least one provider sandbox or API adapter is available.
 - local development can use `KYC_PROVIDER_MODE=mock` before a real provider adapter is configured.
+- local browser E2E can use `VERIFYFLOW_TEST_AUTH_ENABLED=true` with an invite-allowlisted email.
 - VerifyFlow uses separate provider credentials for check creation and verification when the provider supports that split.
 - Auth.js with Google OAuth and an invite allowlist is the first product login model.
 - Product tiers are `basic`, `verified`, and `enhanced`.
@@ -65,6 +67,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - Tier grants could become stale if provider verification failures are treated as success.
 - Long-term artifact storage could create unnecessary privacy risk.
 - The mock provider could be mistaken for a real provider if environment gating is weak.
+- Local test auth could become a production bypass if environment gating is weak.
 
 ## Validation steps
 
@@ -76,6 +79,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - `npm run validate`
 - `npm run test:e2e` after local services are running
 - local mock issue -> verify -> upgrade -> old-run re-check
+- authenticated local browser E2E for sign-in, onboarding, verification, and upgrade
 
 ## Rollback or containment notes
 

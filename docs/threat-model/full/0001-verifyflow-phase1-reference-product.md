@@ -29,6 +29,7 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - VerifyFlow API to provider check creation endpoint
 - VerifyFlow API to provider verification endpoint
 - VerifyFlow API to local mock provider adapter when `KYC_PROVIDER_MODE=mock`
+- browser to local test Auth.js credentials provider when `VERIFYFLOW_TEST_AUTH_ENABLED=true`
 
 ## Entry points and privileged actions
 
@@ -50,6 +51,7 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - funnel telemetry becomes a shadow identity store
 - denied or failed verification is treated as success
 - mock provider mode is accidentally enabled in production
+- local test auth is accidentally enabled in production
 
 ## Mitigations
 
@@ -60,6 +62,8 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - require provider `allow` before granting `verified` or `enhanced`
 - fail closed on provider auth, check creation, verification, or database errors
 - reject `KYC_PROVIDER_MODE=mock` when `NODE_ENV=production`
+- reject `VERIFYFLOW_TEST_AUTH_ENABLED=true` when `NODE_ENV=production`
+- require local test auth emails to be present in `VERIFYFLOW_INVITE_ALLOWLIST`
 - use bounded funnel event names without raw payloads
 - require invite allowlist for the first friends-and-family environment
 
@@ -82,3 +86,4 @@ Tests must cover:
 - idempotent retries do not duplicate tier grants
 - sensitive payloads are not logged or persisted long-term
 - mock mode is rejected in production configuration
+- local test auth is rejected in production configuration

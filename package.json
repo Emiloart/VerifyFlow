@@ -21,10 +21,11 @@
   "scripts": {
     "dev": "bash scripts/dev-local.sh",
     "build": "npm run build --workspaces --if-present",
-    "lint": "eslint \"apps/web/app/**/*.{ts,tsx}\" \"apps/web/auth.ts\" \"services/api/src/**/*.ts\" \"packages/*/src/**/*.ts\"",
+    "lint": "eslint \"apps/web/**/*.{ts,tsx}\" \"services/api/src/**/*.ts\" \"packages/*/src/**/*.ts\"",
     "typecheck": "tsc --build --pretty false && npm run typecheck -w apps/web",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:local": "bash scripts/e2e-local.sh",
     "governance": "node scripts/check-governance.mjs",
     "check:no-secrets": "node scripts/check-no-secrets.mjs",
     "validate": "npm run governance && npm run check:no-secrets && npm run lint && npm run typecheck && npm run test"
