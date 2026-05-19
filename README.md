@@ -22,6 +22,9 @@ The product flow is intentionally narrow:
 - `infra`: local and deployment support
 - `docs`: governance, product, architecture, privacy, threat model, and runbooks
 
+Default deployment is Vercel for the Next.js/Auth.js UI, Railway for the Fastify API, and Supabase for Postgres.
+The Railway API is the only runtime that talks to KYC provider adapters and Supabase Postgres.
+
 ## Core invariant
 
 VerifyFlow consumes KYC providers only through configured provider adapters.
@@ -46,3 +49,4 @@ npm run dev
 The default `.env.example` uses the local mock provider adapter, so the first local loop does not require a real KYC provider sandbox.
 
 Local runtime dependencies are documented in `docs/runbooks/local-dev.md`.
+The remaining launch path is tracked in `docs/runbooks/launch-checklist.md`.

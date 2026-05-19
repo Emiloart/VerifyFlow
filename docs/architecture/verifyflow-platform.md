@@ -2,9 +2,22 @@
 
 ## Runtime shape
 
-`apps/web` renders product flows and calls `services/api`.
-`services/api` owns product state, provider adapter calls, funnel events, and tier grants.
-Postgres stores VerifyFlow product data.
+Default deployment topology:
+
+```text
+User Browser
+  -> Vercel: Next.js/Auth.js UI
+  -> Railway: Fastify API
+  -> Supabase: Postgres
+
+Railway API
+  -> KYC provider adapters
+  -> Supabase Postgres
+```
+
+`apps/web` renders product flows on Vercel and calls `services/api`.
+`services/api` runs on Railway and owns product state, provider adapter calls, funnel events, and tier grants.
+Supabase Postgres stores VerifyFlow product data.
 
 Admin users listed in `VERIFYFLOW_ADMIN_EMAILS` can view cross-user measurement summaries.
 Non-admin users remain limited to their own tester flow and account tier state.

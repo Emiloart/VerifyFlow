@@ -17,7 +17,7 @@ export function loadApiConfig(env: EnvSource = process.env): ApiConfig {
   }
 
   return {
-    port: Number.parseInt(optionalEnv(env, "VERIFYFLOW_API_PORT", "4100"), 10),
+    port: Number.parseInt(optionalEnv(env, "VERIFYFLOW_API_PORT", optionalEnv(env, "PORT", "4100")), 10),
     databaseUrl: requiredEnv(env, "DATABASE_URL"),
     webOrigin: requiredEnv(env, "VERIFYFLOW_WEB_ORIGIN"),
     webApiToken: requiredEnv(env, "VERIFYFLOW_WEB_API_TOKEN"),

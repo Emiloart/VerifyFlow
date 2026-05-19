@@ -28,4 +28,15 @@ describe("api config", () => {
       KYC_PROVIDER_MODE: "mock"
     })).toThrow("mock is not allowed in production");
   });
+
+  it("uses Railway PORT when VERIFYFLOW_API_PORT is not set", () => {
+    const config = loadApiConfig({
+      ...baseEnv,
+      NODE_ENV: "development",
+      PORT: "7654",
+      KYC_PROVIDER_MODE: "mock"
+    });
+
+    expect(config.port).toBe(7654);
+  });
 });

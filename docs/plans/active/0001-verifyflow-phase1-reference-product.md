@@ -59,6 +59,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - VerifyFlow is standalone at `/mnt/c/dev/verifyflow`.
 - at least one provider sandbox or API adapter is available.
 - local development can use `KYC_PROVIDER_MODE=mock` before a real provider adapter is configured.
+- deployed friends-and-family environments use Vercel for web, Railway for API, and Supabase for Postgres.
 - local browser E2E can use `VERIFYFLOW_TEST_AUTH_ENABLED=true` with an invite-allowlisted email.
 - cross-user measurement views require `VERIFYFLOW_ADMIN_EMAILS`.
 - VerifyFlow uses separate provider credentials for check creation and verification when the provider supports that split.
@@ -100,5 +101,4 @@ If provider credentials leak, rotate affected provider clients immediately and i
 
 ## Open questions
 
-- Whether the first deployed friends-and-family environment should use Vercel/Railway or a single VM after local validation.
 - Whether enhanced-tier upgrade copy should be user-facing or operator-only for the first pilot.
