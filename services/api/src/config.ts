@@ -6,6 +6,7 @@ export type ApiConfig = {
   webOrigin: string;
   webApiToken: string;
   inviteAllowlist: string[];
+  adminEmails: string[];
   provider: ProviderConfig;
 };
 
@@ -21,6 +22,7 @@ export function loadApiConfig(env: EnvSource = process.env): ApiConfig {
     webOrigin: requiredEnv(env, "VERIFYFLOW_WEB_ORIGIN"),
     webApiToken: requiredEnv(env, "VERIFYFLOW_WEB_API_TOKEN"),
     inviteAllowlist: parseCsv(optionalEnv(env, "VERIFYFLOW_INVITE_ALLOWLIST", "")),
+    adminEmails: parseCsv(optionalEnv(env, "VERIFYFLOW_ADMIN_EMAILS", "")),
     provider: providerMode === "mock" ? mockProviderConfig(env) : httpProviderConfig(env)
   };
 }

@@ -33,7 +33,7 @@ npm run test:e2e:local
 ```
 
 This starts local Postgres, applies the schema, starts VerifyFlow with mock provider mode and local test auth, and runs Chromium E2E tests.
-Install the Linux Playwright browser first with `npx playwright install chromium`, or export `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to a Linux Chrome/Chromium binary.
+Install Linux browser dependencies and the Playwright browser first with `npx playwright install-deps chromium` and `npx playwright install chromium`, or export `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to a Linux Chrome/Chromium binary.
 Windows `chrome.exe` and `msedge.exe` are not valid WSL Playwright executables because remote debugging pipes are not available across that boundary.
 
 ## Local mock-provider validation

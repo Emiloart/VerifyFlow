@@ -12,6 +12,8 @@ VerifyFlow measures KYC flows without turning the product into a broad identity 
 - Do not log raw claims, artifacts, tokens, client secrets, or request bodies.
 - Store verification decisions, reason codes, provider run IDs, timestamps, and artifact digests only when needed for product state or audit.
 - Keep funnel events bounded to step, outcome, timestamp, and pseudonymous user/session IDs.
+- Keep measurement dashboards bounded to pseudonymous user/session IDs, provider IDs, decisions, tiers, timestamps, durations, and aggregate counts.
+- Do not show full legal names, emails, raw claims, raw artifacts, or token material in cross-user measurement views.
 - Avoid third-party replay or broad analytics in v1.
 
 ## Retention posture

@@ -3,6 +3,8 @@ import type {
   ProviderStatus,
   FunnelSummaryResponse,
   KycLevel,
+  MeasurementSessionsResponse,
+  MeasurementSummaryResponse,
   OnboardingClaims,
   ProductTier,
   UserProfile,
@@ -18,6 +20,7 @@ export type OnboardingSessionRecord = {
   onboardingSessionId: string;
   userId: string;
   claims: OnboardingClaims;
+  createdAt?: string;
 };
 
 export type ProviderRunRecord = {
@@ -64,6 +67,8 @@ export type Repository = {
   grantTier(user: AuthenticatedUser, tier: ProductTier, sourceVerificationId: string): Promise<void>;
   recordFunnelEvent(userId: string | undefined, step: string, outcome: string): Promise<void>;
   summarizeFunnel(): Promise<FunnelSummaryResponse>;
+  summarizeMeasurement(limit: number): Promise<MeasurementSummaryResponse>;
+  listMeasurementSessions(limit: number): Promise<MeasurementSessionsResponse>;
 };
 
 export type ProviderCheckResponse = {

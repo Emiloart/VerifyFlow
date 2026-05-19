@@ -47,6 +47,65 @@ export type MeResponse = {
   user: UserProfile;
 };
 
+export type MeasurementDecision = VerificationDecision | "pending";
+
+export type MeasurementFlowStepStatus = "done" | "active" | "pending" | "error";
+
+export type MeasurementFlowStep = {
+  key: "sign_in" | "onboarding" | "provider_check" | "presentation" | "verification" | "tier_unlock";
+  label: string;
+  status: MeasurementFlowStepStatus;
+  timestamp?: string;
+};
+
+export type MeasurementSession = {
+  sessionId: string;
+  userRef: string;
+  providerId?: string;
+  providerRunId?: string;
+  decision: MeasurementDecision;
+  providerStatus?: ProviderStatus;
+  tier: ProductTier;
+  elapsedSeconds?: number;
+  createdAt: string;
+  evaluatedAt?: string;
+};
+
+export type MeasurementTierCoverage = {
+  tier: ProductTier;
+  users: number;
+};
+
+export type MeasurementFunnelMetric = {
+  step: string;
+  outcome: string;
+  count: number;
+};
+
+export type MeasurementSummaryResponse = {
+  totals: {
+    totalSessions: number;
+    allowRate: number;
+    averageFlowSeconds: number | null;
+    openChecks: number;
+  };
+  latestFlow?: {
+    session: MeasurementSession;
+    steps: MeasurementFlowStep[];
+  };
+  recentSessions: MeasurementSession[];
+  tierCoverage: MeasurementTierCoverage[];
+  funnel: MeasurementFunnelMetric[];
+  nextPhase: {
+    title: string;
+    description: string;
+  };
+};
+
+export type MeasurementSessionsResponse = {
+  sessions: MeasurementSession[];
+};
+
 export type OnboardingSessionRequest = {
   claims: OnboardingClaims;
 };

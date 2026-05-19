@@ -10,6 +10,7 @@
 
 - `DATABASE_URL`
 - `VERIFYFLOW_WEB_ORIGIN`
+- `VERIFYFLOW_ADMIN_EMAILS`
 - KYC provider issue/check endpoint
 - KYC provider verification endpoint
 - KYC provider token endpoint when OAuth is used
@@ -22,6 +23,7 @@ Run Drizzle migrations before API startup.
 - `NEXT_PUBLIC_VERIFYFLOW_API_BASE_URL`
 - Auth.js provider configuration
 - invite allowlist
+- matching `VERIFYFLOW_ADMIN_EMAILS` for admin navigation visibility
 
 ## Production defaults
 

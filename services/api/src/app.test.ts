@@ -13,11 +13,23 @@ const userHeaders = {
   "x-verifyflow-user-email": "friend@example.com"
 };
 
+const nonAdminHeaders = {
+  ...userHeaders,
+  "x-verifyflow-user-id": "user_456",
+  "x-verifyflow-user-email": "tester@example.com"
+};
+
+const appConfig = {
+  webOrigin: "http://localhost:3000",
+  webApiToken: "test-web-token",
+  adminEmails: ["friend@example.com"]
+};
+
 describe("VerifyFlow API", () => {
   it("grants verified tier only after provider allow", async () => {
     const repository = new MemoryRepository();
     const app = await buildApp({
-      config: { webOrigin: "http://localhost:3000", webApiToken: "test-web-token" },
+      config: appConfig,
       repository,
       providerClient: new FakeProviderClient("allow")
     });
@@ -53,7 +65,7 @@ describe("VerifyFlow API", () => {
   it("does not grant tier after provider deny", async () => {
     const repository = new MemoryRepository();
     const app = await buildApp({
-      config: { webOrigin: "http://localhost:3000", webApiToken: "test-web-token" },
+      config: appConfig,
       repository,
       providerClient: new FakeProviderClient("deny")
     });
@@ -84,7 +96,7 @@ describe("VerifyFlow API", () => {
 
   it("fails closed when provider verification is unavailable", async () => {
     const app = await buildApp({
-      config: { webOrigin: "http://localhost:3000", webApiToken: "test-web-token" },
+      config: appConfig,
       repository: new MemoryRepository(),
       providerClient: new UnavailableProviderClient()
     });
@@ -109,7 +121,7 @@ describe("VerifyFlow API", () => {
   it("supports deterministic local mock provider upgrade and old-run supersede", async () => {
     const repository = new MemoryRepository();
     const app = await buildApp({
-      config: { webOrigin: "http://localhost:3000", webApiToken: "test-web-token" },
+      config: appConfig,
       repository,
       providerClient: new MockKycProviderClient({ mode: "mock", providerId: "mock-provider" })
     });
@@ -157,6 +169,99 @@ describe("VerifyFlow API", () => {
     expect(upgraded.json<{ tier: string }>().tier).toBe("enhanced");
     expect(oldRecheck.json<{ tier: string; verification: { providerStatus: string } }>().tier).toBe("enhanced");
     expect(oldRecheck.json<{ verification: { providerStatus: string } }>().verification.providerStatus).toBe("superseded");
+  });
+
+  it("returns admin-only measurement summary without raw claims or artifacts", async () => {
+    const repository = new MemoryRepository();
+    const app = await buildApp({
+      config: appConfig,
+      repository,
+      providerClient: new FakeProviderClient("allow")
+    });
+
+    const session = await app.inject({
+      method: "POST",
+      url: "/v1/onboarding/sessions",
+      headers: userHeaders,
+      payload: { claims: basicClaims() }
+    });
+    const issued = await app.inject({
+      method: "POST",
+      url: "/v1/provider/checks",
+      headers: userHeaders,
+      payload: { onboardingSessionId: session.json<{ onboardingSessionId: string }>().onboardingSessionId }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/verifications",
+      headers: userHeaders,
+      payload: { presentationPayload: issued.json<{ presentationPayload: unknown }>().presentationPayload }
+    });
+
+    const summary = await app.inject({
+      method: "GET",
+      url: "/v1/measurement/summary",
+      headers: userHeaders
+    });
+    const body = summary.json<{
+      totals: { totalSessions: number; allowRate: number };
+      recentSessions: unknown[];
+    }>();
+    const serialized = JSON.stringify(body);
+
+    expect(summary.statusCode).toBe(200);
+    expect(body.totals.totalSessions).toBe(1);
+    expect(body.totals.allowRate).toBe(100);
+    expect(body.recentSessions).toHaveLength(1);
+    expect(serialized).not.toContain("Example Person");
+    expect(serialized).not.toContain("test-artifact");
+    expect(serialized).not.toContain("friend@example.com");
+  });
+
+  it("returns admin-only measurement sessions", async () => {
+    const repository = new MemoryRepository();
+    const app = await buildApp({
+      config: appConfig,
+      repository,
+      providerClient: new FakeProviderClient("allow")
+    });
+
+    const session = await app.inject({
+      method: "POST",
+      url: "/v1/onboarding/sessions",
+      headers: userHeaders,
+      payload: { claims: basicClaims() }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/measurement/sessions",
+      headers: userHeaders
+    });
+    const body = response.json<{ sessions: Array<{ sessionId: string; userRef: string; decision: string }> }>();
+
+    expect(session.statusCode).toBe(200);
+    expect(response.statusCode).toBe(200);
+    expect(body.sessions).toHaveLength(1);
+    expect(body.sessions[0]?.sessionId).toMatch(/^VF-/);
+    expect(body.sessions[0]?.userRef).toBe("user_user_123");
+    expect(body.sessions[0]?.decision).toBe("pending");
+  });
+
+  it("rejects non-admin measurement access", async () => {
+    const app = await buildApp({
+      config: appConfig,
+      repository: new MemoryRepository(),
+      providerClient: new FakeProviderClient("allow")
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/measurement/sessions",
+      headers: nonAdminHeaders
+    });
+
+    expect(response.statusCode).toBe(403);
   });
 });
 

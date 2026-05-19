@@ -8,7 +8,7 @@ import type { ApiConfig } from "./config.js";
 import type { AuthenticatedUser, KycProviderClient, Repository } from "./repository.js";
 
 type AppDeps = {
-  config: Pick<ApiConfig, "webOrigin" | "webApiToken">;
+  config: Pick<ApiConfig, "webOrigin" | "webApiToken" | "adminEmails">;
   repository: Repository;
   providerClient: KycProviderClient;
 };
@@ -173,6 +173,26 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
   app.get("/v1/funnel/summary", async () => deps.repository.summarizeFunnel());
 
+  app.get("/v1/measurement/summary", async (request, reply) => {
+    const user = (request as AuthenticatedRequest).user;
+    if (!isAdmin(user.email, deps.config.adminEmails)) {
+      await reply.status(403).send({ error: { code: "forbidden", message: "Measurement access requires an admin account." } });
+      return;
+    }
+
+    return deps.repository.summarizeMeasurement(readLimit(request.query, 5));
+  });
+
+  app.get("/v1/measurement/sessions", async (request, reply) => {
+    const user = (request as AuthenticatedRequest).user;
+    if (!isAdmin(user.email, deps.config.adminEmails)) {
+      await reply.status(403).send({ error: { code: "forbidden", message: "Measurement access requires an admin account." } });
+      return;
+    }
+
+    return deps.repository.listMeasurementSessions(readLimit(request.query, 50));
+  });
+
   return app;
 }
 
@@ -225,6 +245,25 @@ function headerValue(value: string | string[] | undefined): string | undefined {
   }
 
   return value;
+}
+
+function isAdmin(email: string, adminEmails: string[]): boolean {
+  const normalized = email.trim().toLowerCase();
+  return adminEmails.some((adminEmail) => adminEmail.trim().toLowerCase() === normalized);
+}
+
+function readLimit(query: unknown, defaultLimit: number): number {
+  if (typeof query !== "object" || query === null || !Object.hasOwn(query, "limit")) {
+    return defaultLimit;
+  }
+
+  const rawLimit = (query as { limit?: unknown }).limit;
+  const value = typeof rawLimit === "string" ? Number.parseInt(rawLimit, 10) : defaultLimit;
+  if (!Number.isFinite(value)) {
+    return defaultLimit;
+  }
+
+  return Math.max(1, Math.min(value, 100));
 }
 
 function digestArtifact(value: string): string {

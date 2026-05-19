@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { ProductTier, UserProfile } from "@verifyflow/contracts";
 
+import { buildMeasurementSessionsResponse, buildMeasurementSummary } from "./measurement.js";
 import type {
   AuthenticatedUser,
   ProviderRunInput,
@@ -44,7 +45,8 @@ export class MemoryRepository implements Repository {
     const record = {
       onboardingSessionId: randomUUID(),
       userId: user.userId,
-      claims
+      claims,
+      createdAt: new Date().toISOString()
     };
     this.onboardingSessions.set(record.onboardingSessionId, record);
     return record;
@@ -125,5 +127,35 @@ export class MemoryRepository implements Repository {
         return { step: step ?? "unknown", outcome: outcome ?? "unknown", count };
       })
     };
+  }
+
+  async summarizeMeasurement(limit: number) {
+    return buildMeasurementSummary({
+      users: [...this.users.values()].map((user) => ({ userId: user.userId })),
+      onboardingSessions: [...this.onboardingSessions.values()].map((session) => ({
+        onboardingSessionId: session.onboardingSessionId,
+        userId: session.userId,
+        createdAt: session.createdAt ?? new Date(0).toISOString()
+      })),
+      providerRuns: [...this.providerRuns.values()],
+      verificationAttempts: [...this.verificationAttempts.values()],
+      tierGrants: this.tierGrants.map((grant) => ({ ...grant, sourceVerificationId: grant.sourceVerificationId })),
+      funnel: (await this.summarizeFunnel()).events
+    }, limit);
+  }
+
+  async listMeasurementSessions(limit: number) {
+    return buildMeasurementSessionsResponse({
+      users: [...this.users.values()].map((user) => ({ userId: user.userId })),
+      onboardingSessions: [...this.onboardingSessions.values()].map((session) => ({
+        onboardingSessionId: session.onboardingSessionId,
+        userId: session.userId,
+        createdAt: session.createdAt ?? new Date(0).toISOString()
+      })),
+      providerRuns: [...this.providerRuns.values()],
+      verificationAttempts: [...this.verificationAttempts.values()],
+      tierGrants: this.tierGrants.map((grant) => ({ ...grant, sourceVerificationId: grant.sourceVerificationId })),
+      funnel: (await this.summarizeFunnel()).events
+    }, limit);
   }
 }

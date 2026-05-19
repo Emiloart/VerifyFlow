@@ -30,6 +30,7 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - VerifyFlow API to provider verification endpoint
 - VerifyFlow API to local mock provider adapter when `KYC_PROVIDER_MODE=mock`
 - browser to local test Auth.js credentials provider when `VERIFYFLOW_TEST_AUTH_ENABLED=true`
+- admin browser session to cross-user measurement endpoints
 
 ## Entry points and privileged actions
 
@@ -40,6 +41,8 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - tier grant creation
 - enhanced-tier upgrade
 - funnel summary read
+- measurement summary read
+- measurement sessions read
 
 ## Abuse and misuse cases
 
@@ -52,6 +55,8 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - denied or failed verification is treated as success
 - mock provider mode is accidentally enabled in production
 - local test auth is accidentally enabled in production
+- non-admin user accesses cross-user measurement data
+- measurement projections expose raw claims, artifacts, tokens, or full legal names
 
 ## Mitigations
 
@@ -66,6 +71,8 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - require local test auth emails to be present in `VERIFYFLOW_INVITE_ALLOWLIST`
 - use bounded funnel event names without raw payloads
 - require invite allowlist for the first friends-and-family environment
+- require `VERIFYFLOW_ADMIN_EMAILS` for cross-user measurement endpoints
+- project pseudonymous identifiers and bounded metrics only in measurement responses
 
 ## Residual risks
 
@@ -74,6 +81,7 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - Client credentials remain high-value secrets until rotation automation exists.
 - Friends-and-family users may paste real personal data into support channels.
 - Local mock artifacts are not real provider credentials but could still be mishandled if copied into public examples.
+- Cross-user dashboards can still reveal operational behavior and should be limited to invited admins.
 
 ## Validation impact
 
@@ -87,3 +95,5 @@ Tests must cover:
 - sensitive payloads are not logged or persisted long-term
 - mock mode is rejected in production configuration
 - local test auth is rejected in production configuration
+- non-admin measurement requests are rejected
+- measurement responses exclude raw claims, artifacts, tokens, and full legal names

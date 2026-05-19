@@ -13,10 +13,12 @@ describe("api config", () => {
     const config = loadApiConfig({
       ...baseEnv,
       NODE_ENV: "development",
-      KYC_PROVIDER_MODE: "mock"
+      KYC_PROVIDER_MODE: "mock",
+      VERIFYFLOW_ADMIN_EMAILS: "admin@example.com"
     });
 
     expect(config.provider.mode).toBe("mock");
+    expect(config.adminEmails).toEqual(["admin@example.com"]);
   });
 
   it("rejects mock provider mode in production", () => {

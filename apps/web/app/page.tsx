@@ -1,12 +1,13 @@
 import { signIn, auth } from "../auth";
-import { isLocalTestAuthEnabled, localTestAuthEmail } from "../auth-policy";
-import { Dashboard } from "./components";
+import { isAdminEmail, isLocalTestAuthEnabled, localTestAuthEmail } from "../auth-policy";
+import { Dashboard, MeasurementDashboard } from "./components";
 
 export default async function HomePage() {
   const session = await auth();
+  const email = session?.user?.email;
   const testEmail = localTestAuthEmail();
 
-  if (session?.user?.email === undefined) {
+  if (typeof email !== "string" || email.trim() === "") {
     return (
       <main className="auth-screen">
         <section className="auth-panel">
@@ -40,5 +41,5 @@ export default async function HomePage() {
     );
   }
 
-  return <Dashboard />;
+  return isAdminEmail(email) ? <MeasurementDashboard /> : <Dashboard />;
 }

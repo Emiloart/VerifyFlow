@@ -1,10 +1,15 @@
 "use client";
 
 import {
+  Activity,
   ArrowUpRight,
   BadgeCheck,
+  BarChart3,
   Clipboard,
+  Clock3,
   FileCheck2,
+  Gauge,
+  Layers3,
   RefreshCw,
   Send,
   ShieldCheck,
@@ -19,6 +24,9 @@ import {
   assertOnboardingClaims,
   parsePresentationPayload,
   type CreateVerificationResponse,
+  type MeasurementSession,
+  type MeasurementSessionsResponse,
+  type MeasurementSummaryResponse,
   type StartProviderCheckResponse,
   type KycLevel,
   type MeResponse,
@@ -55,13 +63,136 @@ const defaultClaims = (): ClaimsFormState => {
   };
 };
 
-export function RequireSignIn() {
+export function RequireSignIn(props: { title?: string; message?: string } = {}) {
   return (
     <main className="content-shell">
       <section className="panel">
-        <h1>Sign in required</h1>
-        <p className="muted">VerifyFlow routes require a signed-in invited tester.</p>
+        <h1>{props.title ?? "Sign in required"}</h1>
+        <p className="muted">{props.message ?? "VerifyFlow routes require a signed-in invited tester."}</p>
         <Link className="button-link" href="/">Return to sign in</Link>
+      </section>
+    </main>
+  );
+}
+
+export function MeasurementDashboard() {
+  const summary = useQuery({
+    queryKey: ["measurement-summary"],
+    queryFn: () => apiGet<MeasurementSummaryResponse>("/v1/measurement/summary")
+  });
+  const data = summary.data;
+
+  return (
+    <main className="content-shell console-shell">
+      <section className="page-heading console-heading">
+        <div>
+          <p className="eyebrow">Measurement console</p>
+          <h1>KYC Flow Dashboard</h1>
+          <p className="muted">Real provider-flow data only. No placeholder production metrics.</p>
+        </div>
+        <span className="provider-badge">adapter-neutral</span>
+      </section>
+
+      {summary.error instanceof Error ? <ErrorMessage message={summary.error.message} /> : null}
+
+      <section className="stats-grid">
+        <StatCard icon={<Activity size={18} />} label="Total Sessions" value={formatNumber(data?.totals.totalSessions)} detail="onboarding sessions" />
+        <StatCard icon={<Gauge size={18} />} label="Allow Rate" value={data === undefined ? "..." : `${data.totals.allowRate}%`} detail="completed decisions" />
+        <StatCard icon={<Clock3 size={18} />} label="Avg Flow Time" value={data?.totals.averageFlowSeconds === null || data === undefined ? data === undefined ? "..." : "none" : `${data.totals.averageFlowSeconds}s`} detail="created to decision" />
+        <StatCard icon={<Layers3 size={18} />} label="Open Checks" value={formatNumber(data?.totals.openChecks)} detail="pending decisions" />
+      </section>
+
+      {data !== undefined && data.totals.totalSessions === 0 ? (
+        <section className="empty-state">
+          <strong>No measurement sessions yet.</strong>
+          <p>Run onboarding, provider check, verification, and upgrade to populate this dashboard with real data.</p>
+          <Link className="button-link" href="/onboarding">Start first flow</Link>
+        </section>
+      ) : null}
+
+      <section className="console-grid">
+        <div className="panel console-panel span-2">
+          <PanelHeader title="Active Flow" action={data?.latestFlow?.session.sessionId ?? "waiting"} />
+          {data?.latestFlow === undefined ? (
+            <p className="muted">No active flow data yet.</p>
+          ) : (
+            <div className="flow-steps">
+              {data.latestFlow.steps.map((step) => (
+                <div className={`flow-step flow-step-${step.status}`} key={step.key}>
+                  <span className="step-dot">{step.status === "done" ? "✓" : step.status === "error" ? "!" : ""}</span>
+                  <strong>{step.label}</strong>
+                  <small>{step.timestamp === undefined ? "pending" : formatTime(step.timestamp)}</small>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="panel console-panel">
+          <PanelHeader title="Tier Coverage" action="users" />
+          <div className="tier-grid">
+            {(data?.tierCoverage ?? []).map((tier) => (
+              <div className={`tier-card tier-card-${tier.tier}`} key={tier.tier}>
+                <span>{tier.tier}</span>
+                <strong>{tier.users}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel console-panel span-2">
+          <PanelHeader title="Recent Sessions" action={<Link href="/sessions">View all</Link>} />
+          <SessionTable sessions={data?.recentSessions ?? []} compact />
+        </div>
+
+        <div className="panel console-panel">
+          <PanelHeader title="Flow Metrics" action="bounded" />
+          <div className="metric-list">
+            {(data?.funnel ?? []).map((metric) => (
+              <div className="metric-row" key={`${metric.step}-${metric.outcome}`}>
+                <div>
+                  <strong>{metric.step}</strong>
+                  <small>{metric.outcome}</small>
+                </div>
+                <span>{metric.count}</span>
+              </div>
+            ))}
+            {data !== undefined && data.funnel.length === 0 ? <p className="muted">No funnel events yet.</p> : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="next-phase">
+        <BarChart3 size={18} />
+        <div>
+          <strong>{data?.nextPhase.title ?? "Multi-provider comparison"}</strong>
+          <p>{data?.nextPhase.description ?? "Next phase after the single-provider measurement dashboard is real and stable."}</p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export function SessionsView() {
+  const sessions = useQuery({
+    queryKey: ["measurement-sessions"],
+    queryFn: () => apiGet<MeasurementSessionsResponse>("/v1/measurement/sessions")
+  });
+
+  return (
+    <main className="content-shell console-shell">
+      <section className="page-heading console-heading">
+        <div>
+          <p className="eyebrow">Measurement sessions</p>
+          <h1>Session Log</h1>
+          <p className="muted">Pseudonymous provider-flow records without raw claims or artifacts.</p>
+        </div>
+        <Link className="button-link" href="/">Dashboard</Link>
+      </section>
+      {sessions.error instanceof Error ? <ErrorMessage message={sessions.error.message} /> : null}
+      <section className="panel console-panel">
+        <PanelHeader title="Recent Sessions" action="real data" />
+        <SessionTable sessions={sessions.data?.sessions ?? []} />
       </section>
     </main>
   );
@@ -284,6 +415,65 @@ export function SettingsView(props: { email: string }) {
   );
 }
 
+function StatCard(props: { icon: React.ReactNode; label: string; value: string; detail: string }) {
+  return (
+    <article className="stat-card">
+      <span className="stat-icon">{props.icon}</span>
+      <p>{props.label}</p>
+      <strong>{props.value}</strong>
+      <small>{props.detail}</small>
+    </article>
+  );
+}
+
+function PanelHeader(props: { title: string; action: React.ReactNode }) {
+  return (
+    <div className="panel-header">
+      <h2>{props.title}</h2>
+      <span>{props.action}</span>
+    </div>
+  );
+}
+
+function SessionTable(props: { sessions: MeasurementSession[]; compact?: boolean }) {
+  if (props.sessions.length === 0) {
+    return <p className="muted">No sessions to display yet.</p>;
+  }
+
+  return (
+    <div className="table-wrap">
+      <table className="session-table">
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>User</th>
+            {!props.compact ? <th>Provider Run</th> : null}
+            <th>Provider</th>
+            <th>Decision</th>
+            <th>Tier</th>
+            <th>Time</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {props.sessions.map((session) => (
+            <tr key={session.sessionId}>
+              <td className="mono">{session.sessionId}</td>
+              <td className="mono">{session.userRef}</td>
+              {!props.compact ? <td className="mono">{session.providerRunId ?? "pending"}</td> : null}
+              <td>{session.providerId ?? "pending"}</td>
+              <td><span className={`status-chip status-${session.decision}`}>{session.decision}</span></td>
+              <td>{session.tier}</td>
+              <td className="mono">{session.elapsedSeconds === undefined ? "..." : `${session.elapsedSeconds}s`}</td>
+              <td className="mono">{formatTime(session.createdAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function FormFields(props: { form: ClaimsFormState; update: (field: keyof ClaimsFormState, value: string) => void }) {
   return (
     <>
@@ -390,4 +580,22 @@ async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
 
 function toLocalDatetime(date: Date): string {
   return date.toISOString().slice(0, 16);
+}
+
+function formatNumber(value: number | undefined): string {
+  return value === undefined ? "..." : value.toLocaleString("en-US");
+}
+
+function formatTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "unknown";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }

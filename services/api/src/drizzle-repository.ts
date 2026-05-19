@@ -5,6 +5,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import type { ProductTier, UserProfile } from "@verifyflow/contracts";
 
+import { buildMeasurementSessionsResponse, buildMeasurementSummary } from "./measurement.js";
 import * as dbSchema from "./db/schema.js";
 import {
   funnelEvents,
@@ -26,7 +27,10 @@ import type {
 } from "./repository.js";
 
 type Db = PostgresJsDatabase<typeof dbSchema>;
+type OnboardingSessionRow = InferSelectModel<typeof onboardingSessions>;
 type ProviderRunRow = InferSelectModel<typeof providerRuns>;
+type TierGrantRow = InferSelectModel<typeof tierGrants>;
+type UserRow = InferSelectModel<typeof users>;
 type VerificationAttemptRow = InferSelectModel<typeof verificationAttempts>;
 
 export class DrizzleRepository implements Repository {
@@ -70,11 +74,11 @@ export class DrizzleRepository implements Repository {
       onboardingSessionId: randomUUID(),
       userId: user.userId,
       claims
-    }).returning() as OnboardingSessionRecord[];
+    }).returning() as OnboardingSessionRow[];
     if (record === undefined) {
       throw new Error("Could not create onboarding session.");
     }
-    return record;
+    return normalizeOnboardingSession(record);
   }
 
   async getOnboardingSession(user: AuthenticatedUser, onboardingSessionId: string): Promise<OnboardingSessionRecord | null> {
@@ -82,8 +86,8 @@ export class DrizzleRepository implements Repository {
       .select()
       .from(onboardingSessions)
       .where(sql`${onboardingSessions.onboardingSessionId} = ${onboardingSessionId} and ${onboardingSessions.userId} = ${user.userId}`)
-      .limit(1) as OnboardingSessionRecord[];
-    return record ?? null;
+      .limit(1) as OnboardingSessionRow[];
+    return record === undefined ? null : normalizeOnboardingSession(record);
   }
 
   async createProviderRun(input: ProviderRunInput): Promise<ProviderRunRecord> {
@@ -171,6 +175,40 @@ export class DrizzleRepository implements Repository {
       .groupBy(funnelEvents.step, funnelEvents.outcome) as FunnelSummaryRow[];
     return { events: rows };
   }
+
+  async summarizeMeasurement(limit: number) {
+    return buildMeasurementSummary(await this.measurementInput(), limit);
+  }
+
+  async listMeasurementSessions(limit: number) {
+    return buildMeasurementSessionsResponse(await this.measurementInput(), limit);
+  }
+
+  private async measurementInput() {
+    const userRows = await this.db.select().from(users) as UserRow[];
+    const onboardingRows = await this.db.select().from(onboardingSessions) as OnboardingSessionRow[];
+    const providerRunRows = await this.db.select().from(providerRuns) as ProviderRunRow[];
+    const verificationRows = await this.db.select().from(verificationAttempts) as VerificationAttemptRow[];
+    const tierGrantRows = await this.db.select().from(tierGrants) as TierGrantRow[];
+
+    return {
+      users: userRows.map((user) => ({ userId: user.userId })),
+      onboardingSessions: onboardingRows.map((session) => ({
+        onboardingSessionId: session.onboardingSessionId,
+        userId: session.userId,
+        createdAt: session.createdAt.toISOString()
+      })),
+      providerRuns: providerRunRows.map(normalizeProviderRun),
+      verificationAttempts: verificationRows.map(normalizeVerificationAttempt),
+      tierGrants: tierGrantRows.map((grant) => ({
+        userId: grant.userId,
+        tier: grant.tier,
+        sourceVerificationId: grant.sourceVerificationId,
+        grantedAt: grant.grantedAt.toISOString()
+      })),
+      funnel: (await this.summarizeFunnel()).events
+    };
+  }
 }
 
 function normalizeProviderRun(record: ProviderRunRow): ProviderRunRecord {
@@ -185,6 +223,15 @@ function normalizeProviderRun(record: ProviderRunRow): ProviderRunRecord {
     issuedAt: record.issuedAt.toISOString(),
     expiresAt: record.expiresAt.toISOString(),
     ...(record.supersededByProviderRunId === null ? {} : { supersededByProviderRunId: record.supersededByProviderRunId })
+  };
+}
+
+function normalizeOnboardingSession(record: OnboardingSessionRow): OnboardingSessionRecord {
+  return {
+    onboardingSessionId: record.onboardingSessionId,
+    userId: record.userId,
+    claims: record.claims,
+    createdAt: record.createdAt.toISOString()
   };
 }
 

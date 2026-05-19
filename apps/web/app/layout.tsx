@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { auth, signOut } from "../auth";
+import { isAdminEmail } from "../auth-policy";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -13,6 +14,8 @@ export const metadata: Metadata = {
 
 export default async function RootLayout(props: { children: ReactNode }) {
   const session = await auth();
+  const email = session?.user?.email;
+  const isAdmin = typeof email === "string" && isAdminEmail(email);
 
   return (
     <html lang="en">
@@ -24,9 +27,10 @@ export default async function RootLayout(props: { children: ReactNode }) {
                 <span className="brand-mark">VF</span>
                 <span>VerifyFlow</span>
               </Link>
-              {session?.user?.email !== undefined ? (
+              {email !== undefined ? (
                 <nav className="nav-links" aria-label="Main navigation">
-                  <Link href="/">Tier</Link>
+                  <Link href="/">{isAdmin ? "Dashboard" : "Tier"}</Link>
+                  {isAdmin ? <Link href="/sessions">Sessions</Link> : null}
                   <Link href="/onboarding">Onboarding</Link>
                   <Link href="/payload">Payload</Link>
                   <Link href="/verify">Verify</Link>

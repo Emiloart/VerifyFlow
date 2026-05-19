@@ -13,6 +13,7 @@
 
 ```bash
 npm install
+npx playwright install-deps chromium
 npx playwright install chromium
 cp .env.example .env
 docker compose -f infra/local/docker-compose.yml up -d
@@ -25,6 +26,7 @@ This avoids the WSL/Windows Node mismatch that can make Next advertise `localhos
 
 The default local env enables `VERIFYFLOW_TEST_AUTH_ENABLED=true` for browser testing.
 It works only with an email in `VERIFYFLOW_INVITE_ALLOWLIST` and is rejected in production.
+The same local tester is listed in `VERIFYFLOW_ADMIN_EMAILS` so the local measurement dashboard can be exercised with real mock-provider data.
 
 ## Validation
 

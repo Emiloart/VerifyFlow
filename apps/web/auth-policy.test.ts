@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assertLocalTestAuthAllowed, isLocalTestEmailAllowed, localTestAuthEmail } from "./auth-policy.js";
+import { assertLocalTestAuthAllowed, isAdminEmail, isLocalTestEmailAllowed, localTestAuthEmail } from "./auth-policy.js";
 
 describe("web auth policy", () => {
   it("uses the configured local test email only when allowlisted", () => {
@@ -26,5 +26,12 @@ describe("web auth policy", () => {
       NODE_ENV: "production",
       VERIFYFLOW_TEST_AUTH_ENABLED: "true"
     })).toThrow("not allowed in production");
+  });
+
+  it("recognizes configured admin emails", () => {
+    const env = { VERIFYFLOW_ADMIN_EMAILS: "admin@example.com, owner@example.com" };
+
+    expect(isAdminEmail("ADMIN@example.com", env)).toBe(true);
+    expect(isAdminEmail("friend@example.com", env)).toBe(false);
   });
 });

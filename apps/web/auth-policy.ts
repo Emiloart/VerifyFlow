@@ -7,6 +7,17 @@ export function inviteAllowlist(env: AuthEnv = process.env): Set<string> {
     .filter(Boolean));
 }
 
+export function adminEmailSet(env: AuthEnv = process.env): Set<string> {
+  return new Set((env.VERIFYFLOW_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean));
+}
+
+export function isAdminEmail(email: string, env: AuthEnv = process.env): boolean {
+  return adminEmailSet(env).has(email.trim().toLowerCase());
+}
+
 export function isLocalTestAuthEnabled(env: AuthEnv = process.env): boolean {
   return env.VERIFYFLOW_TEST_AUTH_ENABLED === "true";
 }
