@@ -32,4 +32,4 @@ The dashboard intentionally limits data to provider IDs, provider run IDs, decis
 
 - Operators can measure real flows without fake production metrics.
 - Non-admin testers retain access to their own tier and flow screens only.
-- Multi-provider comparison remains a later phase after the single-provider measurement dashboard is real and stable.
+- Multi-provider comparison remains deferred until the single-provider measurement dashboard is real and stable.

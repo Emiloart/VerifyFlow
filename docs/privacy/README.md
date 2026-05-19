@@ -14,7 +14,8 @@ VerifyFlow measures KYC flows without turning the product into a broad identity 
 - Keep funnel events bounded to step, outcome, timestamp, and pseudonymous user/session IDs.
 - Keep measurement dashboards bounded to pseudonymous user/session IDs, provider IDs, decisions, tiers, timestamps, durations, and aggregate counts.
 - Do not show full legal names, emails, raw claims, raw artifacts, or token material in cross-user measurement views.
-- Avoid third-party replay or broad analytics in v1.
+- Avoid third-party replay or broad analytics in the current tester product.
+- Treat document and liveness UI states as representative provider checkpoints only; VerifyFlow must not render file-upload or camera-capture controls unless a new privacy review approves direct media collection.
 
 ## Retention posture
 

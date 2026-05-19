@@ -35,6 +35,7 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 ## Entry points and privileged actions
 
 - user sign-in
+- public landing page
 - onboarding session creation
 - provider check creation
 - provider verification request
@@ -57,6 +58,8 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - local test auth is accidentally enabled in production
 - non-admin user accesses cross-user measurement data
 - measurement projections expose raw claims, artifacts, tokens, or full legal names
+- tester assumes VerifyFlow is collecting document uploads or liveness media because the onboarding journey shows those provider-side checkpoints
+- unauthenticated visitor attempts to read measurement or tester data through the public landing route
 
 ## Mitigations
 
@@ -73,6 +76,10 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - require invite allowlist for the first friends-and-family environment
 - require `VERIFYFLOW_ADMIN_EMAILS` for cross-user measurement endpoints
 - project pseudonymous identifiers and bounded metrics only in measurement responses
+- keep the public landing page static except for sign-in actions and do not call measurement APIs before authentication
+- show document and liveness as provider-side checkpoints only
+- do not render file-upload or camera-capture controls in the onboarding journey
+- continue rejecting raw media, document numbers, and free-form evidence in VerifyFlow API contracts
 
 ## Residual risks
 
@@ -82,6 +89,7 @@ VerifyFlow adds a standalone product that measures KYC provider flows and grants
 - Friends-and-family users may paste real personal data into support channels.
 - Local mock artifacts are not real provider credentials but could still be mishandled if copied into public examples.
 - Cross-user dashboards can still reveal operational behavior and should be limited to invited admins.
+- Tester-facing visual checkpoints can still create confusion if support copy does not repeat that evidence collection belongs to the configured provider.
 
 ## Validation impact
 
@@ -97,3 +105,5 @@ Tests must cover:
 - local test auth is rejected in production configuration
 - non-admin measurement requests are rejected
 - measurement responses exclude raw claims, artifacts, tokens, and full legal names
+- public landing renders without unauthenticated API data
+- onboarding renders no file inputs or camera capture controls

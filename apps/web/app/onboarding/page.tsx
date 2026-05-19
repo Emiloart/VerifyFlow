@@ -3,10 +3,11 @@ import { RequireSignIn, OnboardingFlow } from "../components";
 
 export default async function OnboardingPage() {
   const session = await auth();
-  if (session?.user?.email === undefined) {
+  const email = session?.user?.email;
+
+  if (typeof email !== "string" || email.trim() === "") {
     return <RequireSignIn />;
   }
 
-  return <OnboardingFlow mode="basic" />;
+  return <OnboardingFlow email={email} mode="basic" />;
 }
-

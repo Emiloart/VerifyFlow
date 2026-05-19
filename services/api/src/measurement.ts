@@ -72,7 +72,7 @@ export function buildMeasurementSummary(input: MeasurementInput, limit: number):
     funnel: input.funnel,
     nextPhase: {
       title: "Multi-provider comparison",
-      description: "Next phase after the single-provider measurement dashboard is real and stable."
+      description: "Deferred until the single-provider measurement dashboard is real and stable."
     }
   };
 }

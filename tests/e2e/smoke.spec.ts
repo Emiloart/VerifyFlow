@@ -2,8 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test("unauthenticated user sees VerifyFlow sign-in screen", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "VerifyFlow" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verify once. Measure every KYC flow." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in with Google" })).toBeVisible();
+  await expect(page.getByText("Backend-only provider access")).toBeVisible();
 });
 
 test("local mock user can verify and upgrade", async ({ page }) => {
@@ -12,8 +13,10 @@ test("local mock user can verify and upgrade", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "KYC Flow Dashboard" })).toBeVisible();
 
   await page.getByRole("link", { name: "Onboarding" }).click();
+  await expect(page.getByText("Document and liveness checkpoints are handled provider-side")).toBeVisible();
+  await expect(page.locator("input[type='file']")).toHaveCount(0);
   await page.getByLabel("Full legal name").fill("Local Verified Tester");
-  await page.getByRole("button", { name: "Submit and start" }).click();
+  await page.getByRole("button", { name: "Submit and start provider check" }).click();
   await page.getByRole("button", { name: "Open payload" }).click();
   await page.getByRole("link", { name: "Continue to verification" }).click();
   await page.getByRole("button", { name: "Verify" }).click();

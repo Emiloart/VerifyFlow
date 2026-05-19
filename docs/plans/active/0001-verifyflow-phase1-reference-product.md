@@ -21,6 +21,8 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - Drizzle/Postgres schema
 - first-party funnel events
 - admin-only measurement dashboard backed by real product data
+- unauthenticated public landing page for invited tester entry
+- six-step signed-in onboarding journey with provider-side document and liveness checkpoints
 - local mock KYC provider adapter for deterministic product-loop testing
 - local test auth for browser E2E before Google OAuth is configured
 - local and deployment runbooks
@@ -39,6 +41,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - third-party session replay or broad analytics
 - fake production dashboard metrics
 - multi-provider comparison before the single-provider measurement dashboard is real and stable
+- direct VerifyFlow collection of document uploads, selfies, document numbers, camera streams, phone numbers, or addresses
 
 ## Affected files, services, or packages
 
@@ -73,6 +76,7 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - Long-term artifact storage could create unnecessary privacy risk.
 - The mock provider could be mistaken for a real provider if environment gating is weak.
 - Local test auth could become a production bypass if environment gating is weak.
+- Tester-facing document and liveness checkpoints could be mistaken for VerifyFlow media collection if copy or controls are ambiguous.
 
 ## Validation steps
 
@@ -86,6 +90,8 @@ Build VerifyFlow as a standalone product for measuring KYC flow completion, prov
 - local mock issue -> verify -> upgrade -> old-run re-check
 - authenticated local browser E2E for sign-in, onboarding, verification, and upgrade
 - admin-only measurement endpoint tests for summary, sessions, and non-admin denial
+- unauthenticated landing page renders sign-in calls to action without measurement API data
+- onboarding has no file-upload or camera-capture controls
 
 ## Rollback or containment notes
 

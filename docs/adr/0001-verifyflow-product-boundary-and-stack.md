@@ -38,7 +38,7 @@ Rejected because the stated goal is measurement across KYC flows and providers.
 
 ### Third-party analytics first
 
-Rejected for v1 because identity flows require bounded telemetry and privacy review.
+Rejected for the current tester product because identity flows require bounded telemetry and privacy review.
 
 ## Security impact
 
@@ -63,7 +63,7 @@ If provider contracts change, VerifyFlow must update adapter code explicitly.
 
 ## Open questions
 
-- Whether later versions add provider-specific benchmarking dashboards.
+- Whether provider-specific benchmarking dashboards are added after the neutral single-provider measurement loop is stable.
 
 ## Related plans, PRs, and issues
 

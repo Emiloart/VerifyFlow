@@ -5,15 +5,20 @@ import {
   ArrowUpRight,
   BadgeCheck,
   BarChart3,
+  CheckCircle2,
   Clipboard,
   Clock3,
   FileCheck2,
+  FileText,
   Gauge,
   Layers3,
+  MailCheck,
   RefreshCw,
+  ScanFace,
   Send,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  UserRoundCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -166,7 +171,7 @@ export function MeasurementDashboard() {
         <BarChart3 size={18} />
         <div>
           <strong>{data?.nextPhase.title ?? "Multi-provider comparison"}</strong>
-          <p>{data?.nextPhase.description ?? "Next phase after the single-provider measurement dashboard is real and stable."}</p>
+          <p>{data?.nextPhase.description ?? "Deferred until the single-provider measurement dashboard is real and stable."}</p>
         </div>
       </section>
     </main>
@@ -235,10 +240,11 @@ export function Dashboard() {
   );
 }
 
-export function OnboardingFlow(props: { mode: KycLevel }) {
+export function OnboardingFlow(props: { email: string; mode: KycLevel }) {
   const router = useRouter();
   const [form, setForm] = useState(defaultClaims);
   const [result, setResult] = useState<StartProviderCheckResponse | null>(null);
+  const targetTier = props.mode === "basic" ? "verified" : "enhanced";
   const mutation = useMutation({
     mutationFn: async () => {
       const claims = toClaims(form, props.mode);
@@ -256,33 +262,115 @@ export function OnboardingFlow(props: { mode: KycLevel }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  const steps = onboardingSteps({
+    email: props.email,
+    hasResult: result !== null,
+    isPending: mutation.isPending
+  });
+
   return (
-    <main className="content-shell">
-      <section className="page-heading">
-        <p className="eyebrow">Onboarding</p>
-        <h1>{props.mode === "basic" ? "Start verified-tier check" : "Start enhanced-tier check"}</h1>
-      </section>
-      <form className="form-grid" onSubmit={(event) => {
-        event.preventDefault();
-        mutation.mutate();
-      }}>
-        <FormFields form={form} update={update} />
-        <button className="primary-button" type="submit" disabled={mutation.isPending}>
-          <FileCheck2 size={18} />
-          {mutation.isPending ? "Starting" : "Submit and start"}
-        </button>
-      </form>
-      {mutation.error instanceof Error ? <ErrorMessage message={mutation.error.message} /> : null}
-      {result !== null ? (
-        <section className="success-band">
-          <BadgeCheck size={20} />
-          <div>
-            <strong>{result.providerRunId}</strong>
-            <p>Provider check started. The presentation payload is available on the payload page.</p>
+    <main className="verification-shell">
+      <aside className="verification-progress" aria-label="Onboarding progress">
+        <section className="progress-card">
+          <p className="progress-title">Verification flow</p>
+          <ol className="verification-step-list">
+            {steps.map((step, index) => (
+              <li className={`verification-step ${step.status}`} key={step.title}>
+                <span className="step-num">{step.status === "done" ? <CheckCircle2 size={16} /> : index + 1}</span>
+                <div>
+                  <strong>{step.title}</strong>
+                  <small>{step.detail}</small>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="info-box">
+            <strong>Data-minimized by design</strong>
+            VerifyFlow does not collect document uploads, selfies, document numbers, phone numbers, or addresses.
           </div>
-          <button className="secondary-button" type="button" onClick={() => router.push("/payload")}>Open payload</button>
         </section>
-      ) : null}
+      </aside>
+
+      <section className="verification-main">
+        <section className="verification-card">
+          <div className="card-header">
+            <span className="card-step-tag">{result === null ? "Step 3 of 6" : "Step 6 of 6"}</span>
+            <h1>{targetTier === "verified" ? "Start verified-tier check" : "Start enhanced-tier check"}</h1>
+            <p>
+              Submit only the normalized claims needed to start the configured provider adapter.
+              Document and liveness checkpoints are handled provider-side, not by VerifyFlow media capture.
+            </p>
+          </div>
+
+          <form className="onboarding-form" onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate();
+          }}>
+            <div className="account-proof-grid">
+              <SafeStatusCard icon={<UserRoundCheck size={18} />} title="Account created" text={props.email} status="complete" />
+              <SafeStatusCard icon={<MailCheck size={18} />} title="Email confirmed" text="Derived from your signed-in session" status="complete" />
+            </div>
+
+            <div className="form-section">
+              <div className="section-heading">
+                <span>Personal information</span>
+                <strong>Normalized claims only</strong>
+              </div>
+              <FormFields form={form} update={update} />
+            </div>
+
+            <div className="provider-check-grid" aria-label="Provider-side checkpoints">
+              <ProviderCheckpoint
+                icon={<FileText size={18} />}
+                title="ID document"
+                status={result === null ? "provider-side" : "handled"}
+                text="Visual checkpoint only. The configured provider adapter handles document collection if required."
+              />
+              <ProviderCheckpoint
+                icon={<ScanFace size={18} />}
+                title="Liveness check"
+                status={result === null ? "provider-side" : "handled"}
+                text="Visual checkpoint only. VerifyFlow does not open a camera or store liveness media."
+              />
+            </div>
+
+            <button className="primary-button full-width-button" type="submit" disabled={mutation.isPending}>
+              <FileCheck2 size={18} />
+              {mutation.isPending ? "Starting provider check" : "Submit and start provider check"}
+            </button>
+          </form>
+        </section>
+
+        {mutation.error instanceof Error ? <ErrorMessage message={mutation.error.message} /> : null}
+
+        {result !== null ? (
+          <section className="credential-card">
+            <div className="credential-card-header">
+              <BadgeCheck size={22} />
+              <div>
+                <p className="eyebrow">Presentation ready</p>
+                <h2>Continue to verification</h2>
+              </div>
+              <span className="status-chip status-allow">ready</span>
+            </div>
+            <div className="credential-grid">
+              <CredentialDatum label="Provider run" value={result.providerRunId} mono />
+              <CredentialDatum label="Provider" value={result.providerId} />
+              <CredentialDatum label="Target tier" value={targetTier} />
+              <CredentialDatum label="Check level" value={result.kycLevel} />
+              <CredentialDatum label="Expires" value={formatDateTime(result.expiresAt)} />
+              <CredentialDatum label="VerifyFlow storage" value="artifact digest only" />
+            </div>
+            <p className="muted">
+              The one-time presentation payload is stored only in this browser session so you can test the handoff explicitly.
+            </p>
+            <div className="button-row">
+              <button className="secondary-button" type="button" onClick={() => router.push("/payload")}>Open payload</button>
+              <Link className="button-link" href="/verify">Continue to verification</Link>
+            </div>
+          </section>
+        ) : null}
+      </section>
     </main>
   );
 }
@@ -474,6 +562,58 @@ function SessionTable(props: { sessions: MeasurementSession[]; compact?: boolean
   );
 }
 
+type VisualStepStatus = "done" | "active" | "pending";
+
+function onboardingSteps(input: { email: string; hasResult: boolean; isPending: boolean }) {
+  const claimsStatus: VisualStepStatus = input.hasResult || input.isPending ? "done" : "active";
+  const providerStatus: VisualStepStatus = input.hasResult ? "done" : input.isPending ? "active" : "pending";
+  const handoffStatus: VisualStepStatus = input.hasResult ? "active" : "pending";
+
+  return [
+    { title: "Account created", detail: input.email, status: "done" as const },
+    { title: "Email confirmed", detail: "Signed-in session", status: "done" as const },
+    { title: "Personal information", detail: "Normalized claims", status: claimsStatus },
+    { title: "ID document", detail: "Provider-side checkpoint", status: providerStatus },
+    { title: "Liveness check", detail: "Provider-side checkpoint", status: providerStatus },
+    { title: "Verification handoff", detail: input.hasResult ? "Payload ready" : "Pending provider run", status: handoffStatus }
+  ];
+}
+
+function SafeStatusCard(props: { icon: React.ReactNode; title: string; text: string; status: string }) {
+  return (
+    <article className="safe-status-card">
+      <span>{props.icon}</span>
+      <div>
+        <strong>{props.title}</strong>
+        <small>{props.text}</small>
+      </div>
+      <em>{props.status}</em>
+    </article>
+  );
+}
+
+function ProviderCheckpoint(props: { icon: React.ReactNode; title: string; text: string; status: string }) {
+  return (
+    <article className="provider-check-card">
+      <span>{props.icon}</span>
+      <div>
+        <strong>{props.title}</strong>
+        <p>{props.text}</p>
+      </div>
+      <em>{props.status}</em>
+    </article>
+  );
+}
+
+function CredentialDatum(props: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="credential-datum">
+      <span>{props.label}</span>
+      <strong className={props.mono === true ? "mono" : undefined}>{props.value}</strong>
+    </div>
+  );
+}
+
 function FormFields(props: { form: ClaimsFormState; update: (field: keyof ClaimsFormState, value: string) => void }) {
   return (
     <>
@@ -510,13 +650,31 @@ function FormFields(props: { form: ClaimsFormState; update: (field: keyof Claims
 }
 
 function VerificationResult(props: { response: CreateVerificationResponse }) {
+  const verification = props.response.verification;
+
   return (
-    <section className={`result-band decision-${props.response.verification.decision}`}>
-      <ShieldCheck size={20} />
-      <div>
-        <strong>{props.response.verification.decision} {"->"} {props.response.tier}</strong>
-        <p>{props.response.verification.reasonCodes.join(", ")}</p>
+    <section className={`credential-card verification-result-card decision-${verification.decision}`}>
+      <div className="credential-card-header">
+        <ShieldCheck size={22} />
+        <div>
+          <p className="eyebrow">Verification result</p>
+          <h2>{verification.decision} {"->"} {props.response.tier}</h2>
+        </div>
+        <span className={`status-chip status-${verification.decision}`}>{verification.decision}</span>
       </div>
+      <div className="credential-grid">
+        <CredentialDatum label="Verification" value={verification.verificationId} mono />
+        <CredentialDatum label="Provider run" value={verification.providerRunId ?? "not returned"} mono />
+        <CredentialDatum label="Tier after decision" value={props.response.tier} />
+        <CredentialDatum label="Provider status" value={verification.providerStatus} />
+        <CredentialDatum label="Evaluated" value={formatDateTime(verification.evaluatedAt)} />
+        <CredentialDatum label="Reason codes" value={verification.reasonCodes.length === 0 ? "none" : verification.reasonCodes.join(", ")} />
+      </div>
+      {verification.decision === "allow" && verification.providerStatus === "active" ? (
+        <p className="muted">Tier unlock is derived from the provider decision and active provider status.</p>
+      ) : (
+        <p className="muted">Fail-closed result: this decision does not unlock or upgrade the tester tier.</p>
+      )}
     </section>
   );
 }
@@ -593,6 +751,21 @@ function formatTime(value: string): string {
   }
 
   return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "unknown";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
