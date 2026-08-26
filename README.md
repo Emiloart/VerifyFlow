@@ -3,7 +3,7 @@
 VerifyFlow is a standalone KYC flow measurement product.
 It lets you test onboarding, provider checks, provider presentations, verification outcomes, re-checks, and tier upgrades against any KYC provider adapter.
 
-The product flow is intentionally narrow:
+The product flow is intentionally narrow (might be extended later):
 
 1. A user signs in to VerifyFlow.
 2. The user completes normalized onboarding.
